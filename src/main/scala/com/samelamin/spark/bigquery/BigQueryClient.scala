@@ -3,6 +3,7 @@ package com.samelamin.spark.bigquery
 import java.math.BigInteger
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -11,7 +12,7 @@ import com.google.api.services.bigquery.model.{Dataset => BQDataset, _}
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.cloud.hadoop.io.bigquery._
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
-import com.google.gson.JsonParser
+import com.google.gson.{Gson, JsonParser}
 import com.samelamin.spark.bigquery.utils.{BigQueryPartitionUtils, EnvHacker}
 import org.apache.hadoop.util.Progressable
 import org.apache.spark.sql._
@@ -59,6 +60,16 @@ class BigQueryClient(sqlContext: SQLContext, var bigquery: Bigquery = null) exte
   @transient
   val hadoopConf = sqlContext.sparkContext.hadoopConfiguration
   val bqPartitonUtils = new BigQueryPartitionUtils(bigquery)
+  @transient
+  lazy val rows = Array.fill[TableDataInsertAllRequest.Rows](100)(new TableDataInsertAllRequest.Rows)
+
+  @transient
+  var rowIndex = 0
+
+  @transient
+  lazy val gson = new Gson()
+  @transient
+  lazy val targetClass = (new java.util.HashMap[String, Object]).getClass
 
   val STAGING_DATASET_PREFIX = "bq.staging_dataset.prefix"
   val STAGING_DATASET_PREFIX_DEFAULT = "spark_bigquery_staging_"
@@ -226,6 +237,9 @@ class BigQueryClient(sqlContext: SQLContext, var bigquery: Bigquery = null) exte
   def getTableSchema(tableReference: TableReference): TableSchema = {
     val table = bigquery.tables().get(tableReference.getProjectId,tableReference.getDatasetId,tableReference.getTableId).execute()
     table.getSchema()
+  }
+
+  def streamToTable(df: DataFrame,batchId:Long, destinationTable:TableReference): Unit = {
   }
 
 }

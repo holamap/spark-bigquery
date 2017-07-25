@@ -19,8 +19,18 @@ class BigQuerySink(sparkSession: SparkSession, path: String, options: Map[String
 
   private val fileLog = new BigQuerySinkLog(sparkSession, logPath.toUri.toString)
   override def addBatch(batchId: Long, data: DataFrame): Unit = {
+
+    val useStreamingInserts = options.getOrElse("useStreamingInserts", "false").toBoolean
     if (batchId <= fileLog.getLatest().getOrElse(-1L)) {
       logger.info(s"Skipping already committed batch $batchId")
+    } else if (useStreamingInserts) {
+      val fullyQualifiedOutputTableId = options.get("tableReferenceSink").get
+      val isPartitionByDay =  options.getOrElse("partitionByDay","true").toBoolean
+      logger.info("***********************")
+      logger.info(s"*********************** is partition by day? $isPartitionByDay")
+      data.saveAsBigQueryTable(fullyQualifiedOutputTableId, isPartitionByDay)
+      fileLog.writeBatch(batchId)
+
     } else {
       val fullyQualifiedOutputTableId = options.get("tableReferenceSink").get
       val isPartitionByDay = Try(options.get("partitionByDay").get.toBoolean).getOrElse(true)
