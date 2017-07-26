@@ -24,11 +24,12 @@ class BigQuerySink(sparkSession: SparkSession, path: String, options: Map[String
     if (batchId <= fileLog.getLatest().getOrElse(-1L)) {
       logger.info(s"Skipping already committed batch $batchId")
     } else if (useStreamingInserts) {
+      val bqClient = BigQueryClient.getInstance(data.sqlContext)
       val fullyQualifiedOutputTableId = options.get("tableReferenceSink").get
       val isPartitionByDay =  options.getOrElse("partitionByDay","true").toBoolean
       logger.info("***********************")
       logger.info(s"*********************** is partition by day? $isPartitionByDay")
-      data.saveAsBigQueryTable(fullyQualifiedOutputTableId, isPartitionByDay)
+      bqClient.streamToBQTable(fullyQualifiedOutputTableId, data, batchId)
       fileLog.writeBatch(batchId)
 
     } else {
