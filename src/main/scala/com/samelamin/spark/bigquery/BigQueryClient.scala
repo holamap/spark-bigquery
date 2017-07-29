@@ -1,6 +1,7 @@
 package com.samelamin.spark.bigquery
 
 import java.math.BigInteger
+import java.util
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -8,6 +9,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.services.bigquery.model.TableDataInsertAllRequest.Rows
 import com.google.api.services.bigquery.model.{Dataset => BQDataset, _}
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.cloud.hadoop.io.bigquery.{BigQueryConfiguration, BigQueryStrings, BigQueryUtils}
@@ -21,7 +23,6 @@ import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
@@ -61,8 +62,7 @@ class BigQueryClient(sqlContext: SQLContext, var bigquery: Bigquery = null) exte
   lazy val jsonParser = new JsonParser()
   @transient
   val hadoopConf = sqlContext.sparkContext.hadoopConfiguration
-  @transient
-  var rowIndex = 0
+  val bqPartitonUtils = new BigQueryPartitionUtils(bigquery)
 
 
   val STAGING_DATASET_PREFIX = "bq.staging_dataset.prefix"
@@ -236,34 +236,36 @@ class BigQueryClient(sqlContext: SQLContext, var bigquery: Bigquery = null) exte
 
   // Pre-fill rows buffer in order to reuse it
   @transient
-  lazy val rows = Array.fill[TableDataInsertAllRequest.Rows](100)(new TableDataInsertAllRequest.Rows)
-  @transient
-  var rowIndex = 0
-
-  @transient
   lazy val gson = new Gson()
   @transient
-  lazy val targetClass = (new java.util.HashMap[String, Object]).getClass
+  lazy val rows = new util.ArrayList[Rows]()
+  @transient
+  val targetClass = (new java.util.HashMap[String, Object]).getClass
+  @transient
+  val rowWrapper = new TableDataInsertAllRequest.Rows
 
 
   def streamToBQTable(tableName:String, df: DataFrame, batchId:Long): Unit = {
-    val adaptedDf = BigQueryAdapter(df)
-    val jsonString = adaptedDf.toJSON.first()
-    val cleanString = jsonString
-    val test = gson.fromJson(cleanString, targetClass)
-    logger.info(s"************ cleanString  is $cleanString")
-    logger.info(s"************ test  is $test")
-
-    rows(rowIndex).setJson(gson.fromJson(cleanString, targetClass)).setInsertId(s"${batchId}")
     val targetTable = BigQueryStrings.parseTableReference(tableName)
-    val request = bigquery.tabledata().insertAll(
-        targetTable.getProjectId,
+    val adaptedDf = BigQueryAdapter(df)
+    println(s"****************************************** adapted df count is ${adaptedDf.count()}")
+
+    if(adaptedDf.take(1).length>0) {
+      adaptedDf.toJSON.collectAsList().toArray().map(_.toString).map{jsonString   =>
+          println("******************************************")
+          println(jsonString)
+          rowWrapper.setJson(gson.fromJson(jsonString, targetClass))
+          rows.add(rowWrapper)
+      }
+
+      val insertAllRequest = new TableDataInsertAllRequest().setRows(rows)
+      val request = bigquery.tabledata().insertAll(targetTable.getProjectId,
         targetTable.getDatasetId,
         targetTable.getTableId,
-        new TableDataInsertAllRequest().setRows(rows.toList))
-
-    val response = request.execute()
-    logger.info(s"************ response is $response")
-  }
+        insertAllRequest)
+      val response = request.execute()
+      rows.clear()
+    }
+   }
 
 }

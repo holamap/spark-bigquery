@@ -1,11 +1,10 @@
 package com.samelamin.spark.bigquery.streaming
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.execution.streaming.Sink
 import com.samelamin.spark.bigquery._
-import org.slf4j.LoggerFactory
-import scala.util.Try
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.execution.streaming.Sink
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.slf4j.LoggerFactory
 
 /**
   * A simple Structured Streaming sink which writes the data frame to Google Bigquery.
@@ -19,27 +18,18 @@ class BigQuerySink(sparkSession: SparkSession, path: String, options: Map[String
 
   private val fileLog = new BigQuerySinkLog(sparkSession, logPath.toUri.toString)
   override def addBatch(batchId: Long, data: DataFrame): Unit = {
-
+    val fullyQualifiedOutputTableId = options.get("tableReferenceSink").get
+    val isPartitionByDay =  options.getOrElse("partitionByDay","true").toBoolean
     val useStreamingInserts = options.getOrElse("useStreamingInserts", "false").toBoolean
     if (batchId <= fileLog.getLatest().getOrElse(-1L)) {
       logger.info(s"Skipping already committed batch $batchId")
     } else if (useStreamingInserts) {
       val bqClient = BigQueryClient.getInstance(data.sqlContext)
-      val fullyQualifiedOutputTableId = options.get("tableReferenceSink").get
-      val isPartitionByDay =  options.getOrElse("partitionByDay","true").toBoolean
-      logger.info("***********************")
-      logger.info(s"*********************** is partition by day? $isPartitionByDay")
       bqClient.streamToBQTable(fullyQualifiedOutputTableId, data, batchId)
-      fileLog.writeBatch(batchId)
-
     } else {
-      val fullyQualifiedOutputTableId = options.get("tableReferenceSink").get
-      val isPartitionByDay = Try(options.get("partitionByDay").get.toBoolean).getOrElse(true)
-
-      val bqDF = new BigQueryDataFrame(data)
-      bqDF.saveAsBigQueryTable(fullyQualifiedOutputTableId, isPartitionByDay)
-      fileLog.writeBatch(batchId)
+      data.saveAsBigQueryTable(fullyQualifiedOutputTableId, isPartitionByDay)
     }
+    fileLog.writeBatch(batchId)
   }
 }
 
