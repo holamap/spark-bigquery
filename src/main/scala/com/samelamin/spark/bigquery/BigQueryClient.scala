@@ -248,16 +248,13 @@ class BigQueryClient(sqlContext: SQLContext, var bigquery: Bigquery = null) exte
   def streamToBQTable(tableName:String, df: DataFrame, batchId:Long): Unit = {
     val targetTable = BigQueryStrings.parseTableReference(tableName)
     val adaptedDf = BigQueryAdapter(df)
-    println(s"****************************************** adapted df count is ${adaptedDf.count()}")
 
     if(adaptedDf.take(1).length>0) {
-      adaptedDf.toJSON.collectAsList().toArray().map(_.toString).map{jsonString   =>
-          println("******************************************")
-          println(jsonString)
-          rowWrapper.setJson(gson.fromJson(jsonString, targetClass))
+      adaptedDf.toJSON.collectAsList().toArray().map(_.toString).map{
+      jsonString   =>
+          rowWrapper.setJson(gson.fromJson(jsonString, targetClass)).setInsertId(s"$batchId")
           rows.add(rowWrapper)
       }
-
       val insertAllRequest = new TableDataInsertAllRequest().setRows(rows)
       val request = bigquery.tabledata().insertAll(targetTable.getProjectId,
         targetTable.getDatasetId,
