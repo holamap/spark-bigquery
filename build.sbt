@@ -32,7 +32,8 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-hive" % "2.1.0" % "test",
   "com.databricks" %% "spark-avro" % "3.1.0",
   "com.holdenkarau" %% "spark-testing-base" % "2.0.0_0.4.7" % "test",
-  "com.google.cloud.bigdataoss" % "bigquery-connector" % "0.8.0-hadoop2"
+  "com.google.cloud.bigdataoss" % "bigquery-connector" % "0.10.2-hadoop2"
+    exclude ("org.apache.avro", "avro-ipc")
     exclude ("com.google.guava", "guava-jdk5"),
   "joda-time" % "joda-time" % "2.9.3",
   "org.mockito" % "mockito-core" % "1.8.5" % "test",
