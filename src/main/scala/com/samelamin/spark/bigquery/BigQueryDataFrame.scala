@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery
+package com.samelaminfork.spark.bigquery
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.cloud.hadoop.io.bigquery._
