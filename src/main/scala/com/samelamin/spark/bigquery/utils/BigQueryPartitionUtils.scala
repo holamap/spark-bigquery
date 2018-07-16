@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery.utils
+package com.samelaminfork.spark.bigquery.utils
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.Bigquery
