@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery.converters
+package com.samelaminfork.spark.bigquery.converters
 
 /*
  * Copyright 2016 samelamin.
