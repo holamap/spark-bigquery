@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery.streaming
+package com.samelaminfork.spark.bigquery.streaming
 
 import java.math.BigInteger
 import com.google.cloud.hadoop.io.bigquery.BigQueryStrings
