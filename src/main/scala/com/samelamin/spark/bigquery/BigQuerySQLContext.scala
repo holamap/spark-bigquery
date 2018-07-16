@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery
+package com.samelaminfork.spark.bigquery
 
 
 import java.math.BigInteger
