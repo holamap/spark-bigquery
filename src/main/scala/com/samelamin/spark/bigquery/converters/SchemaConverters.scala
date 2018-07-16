@@ -50,7 +50,7 @@ object SchemaConverters {
     dataType match {
       case ByteType | ShortType | IntegerType | LongType => "INTEGER"
       case StringType => "STRING"
-      case FloatType | DoubleType => "FLOAT"
+      case FloatType | DoubleType => "DOUBLE"
       case _: DecimalType => "FLOAT"
       case BinaryType => "BYTES"
       case BooleanType => "BOOLEAN"
