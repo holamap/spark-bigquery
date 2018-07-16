@@ -92,7 +92,8 @@ object SchemaConverters {
   def getTypeName(dataType: String):DataType ={
     dataType match {
       case "INTEGER" => LongType
-      case "FLOAT" => FloatType
+      case "LONG" => LongType
+      case "FLOAT" => DoubleType
       case "STRING" => StringType
       case "BYTES" => BinaryType
       case "BOOLEAN" => BooleanType
@@ -141,10 +142,11 @@ object SchemaConverters {
       case BOOLEAN => SchemaType(BooleanType, nullable = false)
       case BYTES => SchemaType(BinaryType, nullable = false)
       case DOUBLE => SchemaType(DoubleType, nullable = false)
-      case FLOAT => SchemaType(FloatType, nullable = false)
+      case FLOAT => SchemaType(DoubleType, nullable = false)
       case LONG => SchemaType(LongType, nullable = false)
       case FIXED => SchemaType(BinaryType, nullable = false)
       case ENUM => SchemaType(StringType, nullable = false)
+      case TIMESTAMP => SchemaType(TimestampType, nullable = false)
 
       case RECORD =>
         val fields = avroSchema.getFields.map { f =>
