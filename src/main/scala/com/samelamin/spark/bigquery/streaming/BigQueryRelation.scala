@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery
+package com.samelaminfork.spark.bigquery
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
