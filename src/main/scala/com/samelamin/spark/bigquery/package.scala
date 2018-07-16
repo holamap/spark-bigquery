@@ -1,4 +1,4 @@
-package com.samelamin.spark
+package com.samelaminfork.spark
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
