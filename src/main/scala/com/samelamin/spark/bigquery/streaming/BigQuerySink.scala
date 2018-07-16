@@ -1,4 +1,4 @@
-package com.samelamin.spark.bigquery.streaming
+package com.samelaminfork.spark.bigquery.streaming
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.execution.streaming.Sink
