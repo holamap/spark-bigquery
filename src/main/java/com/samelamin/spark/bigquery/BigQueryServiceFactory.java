@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.samelamin.spark.bigquery;
+package com.samelaminfork.spark.bigquery;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
